@@ -82,7 +82,7 @@ L.TileLayer.include({
 					tile: tile,
 					url: tileUrl
 				});
-				if (Date.now() > data.timestamp + this.options.cacheMaxAge && !this.options.useOnlyCache) {
+				if (!this.options.useOnlyCache && Date.now() > data.timestamp + this.options.cacheMaxAge) {
 					// Tile is too old, try to refresh it
 					//console.log('Tile is too old: ', tileUrl);
 
@@ -146,15 +146,22 @@ L.TileLayer.include({
 			this.fire('tilecacheerror', { tile: tile, error: err });
 			return done();
 		}
-		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
+		var doc = {_id: tileUrl, dataUrl: dataUrl, timestamp: Date.now()};
 
-		if (existingRevision) {
-			this._db.remove(tileUrl, existingRevision);
-		}
-		/// FIXME: There is a deprecation warning about parameters in the
-		///   this._db.put() call.
-		this._db.put(doc, tileUrl, doc.timestamp);
-
+        var _db = this._db;
+        this._db.get(tileUrl, function(err, prevDoc) {
+            // No tileUrl on cache, put and return
+            if (err && err.name == 'not_found') {
+                return _db.put(doc);
+            }
+            // Cache hit, update
+            if (prevDoc) {
+                doc._rev = prevDoc._rev;
+                return _db.put(doc);
+            }
+            // Fail silently
+            return;
+        });
 		if (done) { done(); }
 	},
 
@@ -259,5 +266,3 @@ L.TileLayer.include({
 	}
 
 });
-
-
