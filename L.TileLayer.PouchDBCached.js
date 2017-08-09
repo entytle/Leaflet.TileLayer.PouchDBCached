@@ -87,7 +87,7 @@ L.TileLayer.include({
 					//console.log('Tile is too old: ', tileUrl);
 
 					if (this.options.saveToCache) {
-						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, data._revs_info[0].rev, done);
+						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, done);
 					}
 					tile.crossOrigin = 'Anonymous';
 					tile.src = tileUrl;
@@ -116,7 +116,7 @@ L.TileLayer.include({
 					//Online, not cached, request the tile normally
 // 					console.log('Requesting tile normally', tileUrl);
 					if (this.options.saveToCache) {
-						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, null, done);
+						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, done);
 					} else {
 						tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 					}
@@ -131,7 +131,7 @@ L.TileLayer.include({
 	//   when the tile (which is an <img>) is ready.
 	// The handler will delete the document from pouchDB if an existing revision is passed.
 	//   This will keep just the latest valid copy of the image in the cache.
-	_saveTile: function(tile, tileUrl, existingRevision, done) {
+	_saveTile: function(tile, tileUrl, done) {
 		if (this._canvas === null) return;
 		this._canvas.width  = tile.naturalWidth  || tile.width;
 		this._canvas.height = tile.naturalHeight || tile.height;
@@ -253,7 +253,7 @@ L.TileLayer.include({
 			if (!data) {
 				/// FIXME: Do something on tile error!!
 				tile.onload = function(ev) {
-					this._saveTile(tile, url, null); //(ev)
+					this._saveTile(tile, url); //(ev)
 					this._seedOneTile(tile, remaining, seedData);
 				}.bind(this);
 				tile.crossOrigin = 'Anonymous';
